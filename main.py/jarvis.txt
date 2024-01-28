@@ -1,0 +1,146 @@
+import os
+import time
+
+import cv2
+import pyautogui
+import pyttsx3
+import speech_recognition as sr
+import datetime
+import random
+import wikipedia
+import requests
+from requests import get
+import requests
+from bs4 import BeautifulSoup
+
+
+
+
+
+engine = pyttsx3.init('sapi5')
+voices = engine.getProperty('voices')
+print(voices[0].id)
+engine.setProperty('voices', voices[0].id)
+
+#text to speech
+def speak (audio):
+    engine.say(audio)
+    print(audio)
+    engine.runAndWait()
+
+#Convert voice into text
+def takecommand():
+    r = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("listening...")
+        r.pause_threshold = 1
+        audio = r.listen(source,timeout=1,phrase_time_limit=5)
+
+    try:
+        print("Recognizing...")
+        query = r.recognize_google(audio, language='en-in')
+        print(f"user said: {query}")
+
+    except Exception as e:
+        speak("Say that again please")
+        return"none"
+    return query
+
+
+#To wish
+def wish():
+    hour = int (datetime.datetime.now().hour)
+    tt = time.strftime("%I:%M:%p")
+
+    if hour>=6 and hour<=12:
+        speak(f"Good morning sir {tt}")
+        speak("I am jarvis, please tell how can i help you?")
+    elif hour>=12 and hour<=18:
+        speak(f"Good Afternoon sir {tt}")
+        speak("I am jarvis, please tell how can i help you? ")
+    else:
+        speak(f"Good evening sir {tt}")
+        speak("I am jarvis, please tell how can i help you?")
+
+
+def Temp():
+    search = "temperature in pune"
+    url = f"https://www.google.com/search?q={search}"
+    r = requests.get(url)
+    data = BeautifulSoup(r.text,"html.parser")
+    temperature = data.find("div",class_="BNeawe").text
+    speak(f"The temperature outside is {temperature} celcius")
+
+
+
+if __name__ == "__main__":
+    wish()
+    #while True:
+    if 1:
+        query = takecommand().lower()
+        if 'hello' in query:
+            speak("Hello sir")
+
+        # logic building for tasks
+
+        if "open notepad" in query:
+            speak("okay sir")
+            npath = "C:\\WINDOWS\\system32\\notepad"
+            os.startfile(npath)
+
+        elif"open command prompt" in query:
+            speak("okay sir")
+            os.system("start cmd")
+
+        elif "open camera" in query:
+            speak("okay sir")
+            cap = cv2.VideoCapture(0)
+            while True:
+                ret, img = cap.read()
+                cv2.imshow('webcam',img)
+                k = cv2.waitKey(50)
+                if k==27:
+                    break;
+            cap.release()
+            cv2.destroyAllWindows()   
+
+
+elif "wikipedia" in query:
+            speak("searching wikipedia.....")
+            query = query.replace("wikipedia","")
+            results = wikipedia.summary(query, sentences =2)
+            speak("according to wikipedia")
+            speak(results)
+            print(results)
+
+        elif "where i am" in query:
+            speak("wait sir,let me check")
+            try:
+                ipAdd = requests.get('https://api.ipify.org').text
+                print(ipAdd)
+                url = 'https:///get.geojs.io/v1/ip/geo/'+ipAdd+'.json'
+                geo_requests = requests.get(url)
+                geo_data = geo_requests.json()
+                #print(geo_data)
+                city = geo_data['city']
+                country = geo_data['country']
+                speak(f"sir i am not sure,but i think we are in {city} city of{country} country")
+            except Exception as e:
+                speak("sorry sir,Due to network issue i am not able to find where we are.")
+                pass
+
+         #take a screenshot
+        elif "take screenshot" in query or "take a screenshot" in query:
+            speak("sir, please take me  the name for this screenshot file")
+            name = takecommand().lower()
+            speak("please sir, hold the screen for few seconds, i am taking screenshot")
+            time.sleep(3)
+            img = pyautogui.screenshot()
+            img.save(f"{name}.png")
+            speak("I am done sir,the screenshot is saved in our main folder. now i am ready for next command")
+            speak("sir, do you have any other work")
+
+
+
+        elif "temperature" in query:
+            Temp()
